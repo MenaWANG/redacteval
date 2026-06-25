@@ -1,0 +1,43 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+*$py.class
+build/
+dist/
+wheels/
+*.egg-info
+*.egg
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Test and coverage artifacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# IDE/editor files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local-only scratch
+.dev/
