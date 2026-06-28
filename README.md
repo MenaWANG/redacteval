@@ -1,6 +1,6 @@
 # RedactEval
 
-An evaluation and diagnostics tool for text redaction quality.
+RedactEval is a Python package designed to evaluate redaction frameworks by comparing original and redacted text against ground-truth entity values that should have been redacted. It is agnostic to redaction-framework output format, enabling users to compare frameworks consistently without complex requirements such as character-span annotations in the input dataset.
 
 ## Installation
 ```bash
