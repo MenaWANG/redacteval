@@ -90,3 +90,11 @@ print_report(results)
 ```
 
 A runnable notebook is available at `examples/demo.ipynb`.
+
+## License
+This project is licensed under the Apache License 2.0.
+See `LICENSE` for details.
+
+## Contributing
+Contributions are welcome.
+Please read `CONTRIBUTING.md` before opening a pull request.
