@@ -196,7 +196,6 @@ def test_evaluate_first_and_last_name_entities_seperate() -> None:
     assert summary["overall"]["fn"] == 0
 
 def test_evaluate_first_and_last_name_entities_small_letter_fail() -> None:
-    # the test will pass if we change <last_name> to <LAST_NAME>
     evaluator = RedactionEvaluator(
         original_text_column="original_text",
         entity_columns=["person"],
@@ -206,7 +205,7 @@ def test_evaluate_first_and_last_name_entities_small_letter_fail() -> None:
     data = [
         {
             "original_text": "Our primary contact for the Sydney office is Jane Smith and she is friendly.",
-            "redacted_framework_a": "Our primary contact for the Sydney office is <FIRST_NAME> <last_name> and she is friendly.",
+            "redacted_framework_a": "Our primary contact for the Sydney office is <FIRST_NAME> <LAST_NAME> and she is friendly.",
             "person": ["Jane", "Smith"],
         }
     ]

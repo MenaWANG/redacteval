@@ -9,6 +9,7 @@ def format_report(results: EvaluationResults, *, precision: int = 3) -> str:
     summary = results.summary()
     overall = summary["overall"]
     per_entity = summary["per_entity"]
+    beta_label = _format_beta_label(beta=float(summary["beta"]))
 
     lines = [
         "=== Redaction Evaluation Report ===",
@@ -20,7 +21,7 @@ def format_report(results: EvaluationResults, *, precision: int = 3) -> str:
         f"TP: {overall['tp']} | FP: {overall['fp']} | FN: {overall['fn']}",
         f"Precision: {overall['precision']:.{precision}f}",
         f"Recall:    {overall['recall']:.{precision}f}",
-        f"F-beta:    {overall['fbeta_score']:.{precision}f}",
+        f"{beta_label}:    {overall['fbeta_score']:.{precision}f}",
         "",
         "Per-entity metrics",
         "------------------",
@@ -32,7 +33,7 @@ def format_report(results: EvaluationResults, *, precision: int = 3) -> str:
         lines.append(
             f"  Precision: {metrics['precision']:.{precision}f} | "
             f"Recall: {metrics['recall']:.{precision}f} | "
-            f"F-beta: {metrics['fbeta_score']:.{precision}f}"
+            f"{beta_label}: {metrics['fbeta_score']:.{precision}f}"
         )
 
     warnings = results.get_warnings()
@@ -50,3 +51,9 @@ def print_report(results: EvaluationResults, *, precision: int = 3) -> None:
     """Print a human-friendly report for evaluation results."""
 
     print(format_report(results, precision=precision))
+
+
+def _format_beta_label(*, beta: float) -> str:
+    if beta.is_integer():
+        return f"F{int(beta)}"
+    return f"F{beta:.1f}"
