@@ -12,7 +12,7 @@ pip install redacteval
   - `original_text_column`: the column containing original text
   - `entity_columns`: canonical ground-truth entity columns (e.g. `person`, `email`)
   - `entity_aliases`: optional aliases per canonical entity (to match tag variants)
-  - `iou_threshold`: minimum overlap threshold for a valid match
+  - `coverage_threshold`: minimum GT-coverage threshold for a valid match
   - `strict_entity_matching`: whether redaction tag type must match entity type
   - `segmenter`: optional custom sentence segmenter
 
@@ -27,7 +27,7 @@ evaluator = RedactionEvaluator(
         "email": ["email", "email_address"],
         "phone_number": ["phone_number", "mobile_number"],
     },
-    iou_threshold=0.8,
+    coverage_threshold=0.8,
     strict_entity_matching=True,
 )
 
@@ -42,7 +42,7 @@ warnings = results_a.get_warnings()
   - `get_warnings()` returns row-level warnings (for example sentence-structure mismatches)
 
 - Prepare the data for evaluation:
-  - Entity columns can contain either a string or a list of strings.
+  - Entity columns can contain a string, a list of strings, or `None`.
   - Example: `email` can hold `["xavier@gmail.com", "amanda_c@hotmail.com"]` for a single row.
 
 ### Ground-Truth Name Input Requirement

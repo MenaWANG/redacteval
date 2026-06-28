@@ -6,7 +6,7 @@ def test_evaluate_returns_summary_and_warnings_api() -> None:
         original_text_column="original_text",
         entity_columns=["person", "email"],
         entity_aliases={"person": ["name"], "email": ["email_address"]},
-        iou_threshold=0.7,
+        coverage_threshold=0.7,
         strict_entity_matching=True,
     )
     data = [
