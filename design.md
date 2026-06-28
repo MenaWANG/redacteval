@@ -140,11 +140,11 @@ Scoring unit is **per ground-truth occurrence**.
 - Coverage score depends on non-whitespace overlap on the GT span, which is (4+6)/(2+4+6+4) = 10/16 = 0.625.
 - **Scenario 1**: The redaction didn't meet the coverage threshold (i.e., when coverage threshold > 0.625)
     - This instance is a FN for the `address` entity, because the original `address` entity is not adequately redacted based on the coverage threshold.
-    - This instance is also a FP for the `person` entity because of the mislabeled tag. Compare to scenario 2.2 below, the mislabel of `address` to `person` is causing a bigger issue since it leads to the undercoverage of the address entity.
+    - This instance is also a FP for the `person` entity because of the mislabeled tag. Compare to scenario 2.2 below, the mislabel of `address` to `person` is causing a bigger issue since it leads to the undercoverage of the `address` entity.
 - **Scenario 2**: The redaction meet the coverage threshold (i.e., when coverage threshold <= 0.625) 
     - **Scenario 2.1**: When strict_entity_matching = False, this instance is counted as a TP for the `address` entity.
     - **Scenario 2.2**: When strict_entity_matching = True
-        - this instance is a FN for the `address` entity, because although it is covered, it is not recognized as the correct entity type.
+        - this instance is a FN for the `address` entity, because although it is covered, it is not recognized as the correct entity type which could affect the downstream analysis of the `address` entity.
         - this instance is currently not also labeled as a FP for the `person` entity to distinguish with Scenario 1 above. 
 
 ---

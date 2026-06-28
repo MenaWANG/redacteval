@@ -18,7 +18,9 @@ def test_evaluate_returns_summary_and_warnings_api() -> None:
         }
     ]
 
-    results = evaluator.evaluate(data, redacted_text_column="redacted_framework_a", beta=2)
+    results = evaluator.evaluate(
+        data, redacted_text_column="redacted_framework_a", beta=2
+    )
     summary = results.summary()
 
     assert summary["evaluated_rows"] == 1

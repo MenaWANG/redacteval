@@ -93,4 +93,6 @@ def load_demo_data(*, as_pandas: bool = True) -> Any:
         return pd.DataFrame(data)
 
     row_count = len(data["original_text"])
-    return [{key: values[idx] for key, values in data.items()} for idx in range(row_count)]
+    return [
+        {key: values[idx] for key, values in data.items()} for idx in range(row_count)
+    ]

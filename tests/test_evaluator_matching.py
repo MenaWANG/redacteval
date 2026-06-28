@@ -16,7 +16,9 @@ def test_evaluate_counts_mislabeled_tag_as_fn_only_when_strict() -> None:
         }
     ]
 
-    summary = evaluator.evaluate(data, redacted_text_column="redacted_framework_a").summary()
+    summary = evaluator.evaluate(
+        data, redacted_text_column="redacted_framework_a"
+    ).summary()
     assert summary["per_entity"]["person"]["tp"] == 0
     assert summary["per_entity"]["person"]["fn"] == 1
     assert summary["per_entity"]["person"]["fp"] == 0
@@ -40,7 +42,9 @@ def test_evaluate_counts_mislabeled_tag_as_tp_when_not_strict() -> None:
         }
     ]
 
-    summary = evaluator.evaluate(data, redacted_text_column="redacted_framework_a").summary()
+    summary = evaluator.evaluate(
+        data, redacted_text_column="redacted_framework_a"
+    ).summary()
     assert summary["per_entity"]["person"]["tp"] == 1
     assert summary["per_entity"]["person"]["fn"] == 0
     assert summary["per_entity"]["person"]["fp"] == 0
@@ -65,13 +69,16 @@ def test_evaluate_uses_coverage_threshold_for_partial_overlap() -> None:
         }
     ]
 
-    summary = evaluator.evaluate(data, redacted_text_column="redacted_framework_a").summary()
+    summary = evaluator.evaluate(
+        data, redacted_text_column="redacted_framework_a"
+    ).summary()
     assert summary["per_entity"]["address"]["tp"] == 0
     assert summary["per_entity"]["address"]["fn"] == 1
     assert summary["per_entity"]["person"]["fp"] == 1
     assert summary["overall"]["tp"] == 0
     assert summary["overall"]["fn"] == 1
     assert summary["overall"]["fp"] == 1
+
 
 def test_evaluate_uses_coverage_threshold_for_partial_overlap_when_not_strict() -> None:
     evaluator = RedactionEvaluator(
@@ -89,13 +96,16 @@ def test_evaluate_uses_coverage_threshold_for_partial_overlap_when_not_strict() 
         }
     ]
 
-    summary = evaluator.evaluate(data, redacted_text_column="redacted_framework_a").summary()
+    summary = evaluator.evaluate(
+        data, redacted_text_column="redacted_framework_a"
+    ).summary()
     assert summary["per_entity"]["address"]["tp"] == 1
     assert summary["per_entity"]["address"]["fn"] == 0
     assert summary["per_entity"]["person"]["fp"] == 0
     assert summary["overall"]["tp"] == 1
     assert summary["overall"]["fn"] == 0
     assert summary["overall"]["fp"] == 0
+
 
 def test_evaluate_uses_coverage_threshold_for_partial_overlap_when_strict() -> None:
     evaluator = RedactionEvaluator(
@@ -113,13 +123,16 @@ def test_evaluate_uses_coverage_threshold_for_partial_overlap_when_strict() -> N
         }
     ]
 
-    summary = evaluator.evaluate(data, redacted_text_column="redacted_framework_a").summary()
+    summary = evaluator.evaluate(
+        data, redacted_text_column="redacted_framework_a"
+    ).summary()
     assert summary["per_entity"]["address"]["tp"] == 0
     assert summary["per_entity"]["address"]["fn"] == 1
     assert summary["per_entity"]["person"]["fp"] == 0
     assert summary["overall"]["tp"] == 0
     assert summary["overall"]["fn"] == 1
     assert summary["overall"]["fp"] == 0
+
 
 def test_evaluate_counts_unmatched_redaction_tags_as_fp() -> None:
     evaluator = RedactionEvaluator(
@@ -136,11 +149,14 @@ def test_evaluate_counts_unmatched_redaction_tags_as_fp() -> None:
         }
     ]
 
-    summary = evaluator.evaluate(data, redacted_text_column="redacted_framework_a").summary()
+    summary = evaluator.evaluate(
+        data, redacted_text_column="redacted_framework_a"
+    ).summary()
     assert summary["per_entity"]["person"]["tp"] == 1
     assert summary["per_entity"]["email"]["fp"] == 1
     assert summary["overall"]["tp"] == 1
     assert summary["overall"]["fp"] == 1
+
 
 def test_evaluate_overlapping_entities_with_strict_coverage_threshold() -> None:
     evaluator = RedactionEvaluator(
@@ -158,7 +174,9 @@ def test_evaluate_overlapping_entities_with_strict_coverage_threshold() -> None:
         }
     ]
 
-    summary = evaluator.evaluate(data, redacted_text_column="redacted_framework_a").summary()
+    summary = evaluator.evaluate(
+        data, redacted_text_column="redacted_framework_a"
+    ).summary()
     assert summary["per_entity"]["person"]["tp"] == 1
     assert summary["per_entity"]["person"]["fp"] == 1
     assert summary["per_entity"]["person"]["fn"] == 0
@@ -168,6 +186,7 @@ def test_evaluate_overlapping_entities_with_strict_coverage_threshold() -> None:
     assert summary["overall"]["tp"] == 1
     assert summary["overall"]["fp"] == 1
     assert summary["overall"]["fn"] == 1
+
 
 def test_evaluate_overlapping_entities_with_non_strict_coverage_threshold() -> None:
     evaluator = RedactionEvaluator(
@@ -185,7 +204,9 @@ def test_evaluate_overlapping_entities_with_non_strict_coverage_threshold() -> N
         }
     ]
 
-    summary = evaluator.evaluate(data, redacted_text_column="redacted_framework_a").summary()
+    summary = evaluator.evaluate(
+        data, redacted_text_column="redacted_framework_a"
+    ).summary()
     assert summary["per_entity"]["person"]["tp"] == 1
     assert summary["per_entity"]["person"]["fp"] == 0
     assert summary["per_entity"]["person"]["fn"] == 0
@@ -195,6 +216,7 @@ def test_evaluate_overlapping_entities_with_non_strict_coverage_threshold() -> N
     assert summary["overall"]["tp"] == 2
     assert summary["overall"]["fp"] == 0
     assert summary["overall"]["fn"] == 0
+
 
 def test_evaluate_first_and_last_name_entities_seperate() -> None:
     evaluator = RedactionEvaluator(
@@ -212,7 +234,9 @@ def test_evaluate_first_and_last_name_entities_seperate() -> None:
         }
     ]
 
-    summary = evaluator.evaluate(data, redacted_text_column="redacted_framework_a").summary()
+    summary = evaluator.evaluate(
+        data, redacted_text_column="redacted_framework_a"
+    ).summary()
     assert summary["per_entity"]["person"]["tp"] == 2
     assert summary["per_entity"]["person"]["fp"] == 0
     assert summary["per_entity"]["person"]["fn"] == 0
@@ -223,8 +247,9 @@ def test_evaluate_first_and_last_name_entities_seperate() -> None:
     assert summary["overall"]["fp"] == 0
     assert summary["overall"]["fn"] == 0
 
+
 def test_evaluate_first_and_last_name_entities_small_letter_fail() -> None:
-    #FIXME: This test will fail when <last_name> is used instead of <LAST_NAME>
+    # FIXME: This test will fail when <last_name> is used instead of <LAST_NAME>
     evaluator = RedactionEvaluator(
         original_text_column="original_text",
         entity_columns=["person"],
@@ -239,14 +264,17 @@ def test_evaluate_first_and_last_name_entities_small_letter_fail() -> None:
         }
     ]
 
-    summary = evaluator.evaluate(data, redacted_text_column="redacted_framework_a").summary()
+    summary = evaluator.evaluate(
+        data, redacted_text_column="redacted_framework_a"
+    ).summary()
     assert summary["per_entity"]["person"]["tp"] == 2
     assert summary["per_entity"]["person"]["fp"] == 0
     assert summary["per_entity"]["person"]["fn"] == 0
     assert summary["overall"]["tp"] == 2
     assert summary["overall"]["fp"] == 0
     assert summary["overall"]["fn"] == 0
-    
+
+
 def test_evaluate_first_and_last_name_entities_combined() -> None:
     evaluator = RedactionEvaluator(
         original_text_column="original_text",
@@ -262,7 +290,9 @@ def test_evaluate_first_and_last_name_entities_combined() -> None:
         }
     ]
 
-    summary = evaluator.evaluate(data, redacted_text_column="redacted_framework_a").summary()
+    summary = evaluator.evaluate(
+        data, redacted_text_column="redacted_framework_a"
+    ).summary()
     assert summary["per_entity"]["person"]["tp"] == 3
     assert summary["per_entity"]["person"]["fp"] == 0
     assert summary["per_entity"]["person"]["fn"] == 0
@@ -290,7 +320,9 @@ def test_name_inside_email_is_not_counted_as_standalone_name() -> None:
         }
     ]
 
-    summary = evaluator.evaluate(data, redacted_text_column="redacted_framework_a").summary()
+    summary = evaluator.evaluate(
+        data, redacted_text_column="redacted_framework_a"
+    ).summary()
     # "John" only appears as part of email local-part, not as a standalone word.
     assert summary["per_entity"]["person"]["tp"] == 0
     assert summary["per_entity"]["person"]["fn"] == 0
@@ -313,7 +345,9 @@ def test_single_person_mask_can_match_multiple_atomic_name_values() -> None:
         }
     ]
 
-    summary = evaluator.evaluate(data, redacted_text_column="redacted_framework_a").summary()
+    summary = evaluator.evaluate(
+        data, redacted_text_column="redacted_framework_a"
+    ).summary()
     assert summary["per_entity"]["person"]["tp"] == 2
     assert summary["per_entity"]["person"]["fn"] == 0
     assert summary["per_entity"]["person"]["fp"] == 0
@@ -334,11 +368,14 @@ def test_single_mask_can_match_multiple_atomic_values_for_other_entities() -> No
         }
     ]
 
-    summary = evaluator.evaluate(data, redacted_text_column="redacted_framework_a").summary()
+    summary = evaluator.evaluate(
+        data, redacted_text_column="redacted_framework_a"
+    ).summary()
     assert summary["per_entity"]["address"]["tp"] == 3
     assert summary["per_entity"]["address"]["fn"] == 0
     assert summary["per_entity"]["address"]["fp"] == 0
-    
+
+
 def test_evaluate_multi_sentence_demo_row_detects_all_framework_a_entities() -> None:
     records = load_demo_data(as_pandas=False)
     evaluator = RedactionEvaluator(
