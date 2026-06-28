@@ -223,6 +223,7 @@ class RedactionEvaluator:
             warnings=warnings,
             evaluated_rows=evaluated_rows,
             skipped_rows=skipped_rows,
+            beta=beta,
         )
 
     def _extract_redaction_events(
@@ -470,6 +471,7 @@ class EvaluationResults:
     warnings: list[str]
     evaluated_rows: int
     skipped_rows: int
+    beta: float
 
     def summary(self) -> dict[str, object]:
         return {
@@ -479,6 +481,7 @@ class EvaluationResults:
             },
             "evaluated_rows": self.evaluated_rows,
             "skipped_rows": self.skipped_rows,
+            "beta": self.beta,
         }
 
     def get_warnings(self) -> list[str]:
