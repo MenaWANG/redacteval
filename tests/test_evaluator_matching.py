@@ -49,18 +49,18 @@ def test_evaluate_counts_mislabeled_tag_as_tp_when_not_strict() -> None:
     assert summary["overall"]["fp"] == 0
 
 
-def test_evaluate_uses_iou_threshold_for_partial_overlap() -> None:
+def test_evaluate_uses_coverage_threshold_for_partial_overlap() -> None:
     evaluator = RedactionEvaluator(
         original_text_column="original_text",
         entity_columns=["address", "person"],
-        iou_threshold=0.8,
+        coverage_threshold=0.8,
         strict_entity_matching=True,
     )
     data = [
         {
             "original_text": "Lives at 33 Mont Albert Road.",
             "redacted_framework_a": "Lives at 33 <PERSON> Road.",
-            "address": "Mont Albert Road",
+            "address": "33 Mont Albert Road",
             "person": None,
         }
     ]
@@ -68,21 +68,23 @@ def test_evaluate_uses_iou_threshold_for_partial_overlap() -> None:
     summary = evaluator.evaluate(data, redacted_text_column="redacted_framework_a").summary()
     assert summary["per_entity"]["address"]["tp"] == 0
     assert summary["per_entity"]["address"]["fn"] == 1
+    assert summary["per_entity"]["person"]["fp"] == 1
     assert summary["overall"]["tp"] == 0
     assert summary["overall"]["fn"] == 1
+    assert summary["overall"]["fp"] == 1
 
-def test_evaluate_uses_iou_threshold_for_partial_overlap_when_not_strict() -> None:
+def test_evaluate_uses_coverage_threshold_for_partial_overlap_when_not_strict() -> None:
     evaluator = RedactionEvaluator(
         original_text_column="original_text",
         entity_columns=["address", "person"],
-        iou_threshold=0.5,
+        coverage_threshold=0.5,
         strict_entity_matching=False,
     )
     data = [
         {
             "original_text": "Lives at 33 Mont Albert Road.",
             "redacted_framework_a": "Lives at 33 <PERSON> Road.",
-            "address": "Mont Albert Road",
+            "address": "33 Mont Albert Road",
             "person": None,
         }
     ]
@@ -90,8 +92,34 @@ def test_evaluate_uses_iou_threshold_for_partial_overlap_when_not_strict() -> No
     summary = evaluator.evaluate(data, redacted_text_column="redacted_framework_a").summary()
     assert summary["per_entity"]["address"]["tp"] == 1
     assert summary["per_entity"]["address"]["fn"] == 0
+    assert summary["per_entity"]["person"]["fp"] == 0
     assert summary["overall"]["tp"] == 1
     assert summary["overall"]["fn"] == 0
+    assert summary["overall"]["fp"] == 0
+
+def test_evaluate_uses_coverage_threshold_for_partial_overlap_when_strict() -> None:
+    evaluator = RedactionEvaluator(
+        original_text_column="original_text",
+        entity_columns=["address", "person"],
+        coverage_threshold=0.5,
+        strict_entity_matching=True,
+    )
+    data = [
+        {
+            "original_text": "Lives at 33 Mont Albert Road.",
+            "redacted_framework_a": "Lives at 33 <PERSON> Road.",
+            "address": "33 Mont Albert Road",
+            "person": None,
+        }
+    ]
+
+    summary = evaluator.evaluate(data, redacted_text_column="redacted_framework_a").summary()
+    assert summary["per_entity"]["address"]["tp"] == 0
+    assert summary["per_entity"]["address"]["fn"] == 1
+    assert summary["per_entity"]["person"]["fp"] == 0
+    assert summary["overall"]["tp"] == 0
+    assert summary["overall"]["fn"] == 1
+    assert summary["overall"]["fp"] == 0
 
 def test_evaluate_counts_unmatched_redaction_tags_as_fp() -> None:
     evaluator = RedactionEvaluator(
@@ -114,12 +142,12 @@ def test_evaluate_counts_unmatched_redaction_tags_as_fp() -> None:
     assert summary["overall"]["tp"] == 1
     assert summary["overall"]["fp"] == 1
 
-def test_evaluate_overlapping_entities_with_strict_iou_threshold() -> None:
+def test_evaluate_overlapping_entities_with_strict_coverage_threshold() -> None:
     evaluator = RedactionEvaluator(
         original_text_column="original_text",
         entity_columns=["person", "email"],
         strict_entity_matching=False,
-        iou_threshold=0.8,
+        coverage_threshold=0.8,
     )
     data = [
         {
@@ -141,12 +169,12 @@ def test_evaluate_overlapping_entities_with_strict_iou_threshold() -> None:
     assert summary["overall"]["fp"] == 1
     assert summary["overall"]["fn"] == 1
 
-def test_evaluate_overlapping_entities_with_non_strict_iou_threshold() -> None:
+def test_evaluate_overlapping_entities_with_non_strict_coverage_threshold() -> None:
     evaluator = RedactionEvaluator(
         original_text_column="original_text",
         entity_columns=["person", "email"],
         strict_entity_matching=False,
-        iou_threshold=0.1,
+        coverage_threshold=0.1,
     )
     data = [
         {
@@ -251,7 +279,7 @@ def test_name_inside_email_is_not_counted_as_standalone_name() -> None:
         original_text_column="original_text",
         entity_columns=["person", "email"],
         strict_entity_matching=True,
-        iou_threshold=0.5,
+        coverage_threshold=0.5,
     )
     data = [
         {
@@ -275,7 +303,7 @@ def test_single_person_mask_can_match_multiple_atomic_name_values() -> None:
         original_text_column="original_text",
         entity_columns=["person"],
         strict_entity_matching=False,
-        iou_threshold=0.8,
+        coverage_threshold=0.8,
     )
     data = [
         {
@@ -296,7 +324,7 @@ def test_single_mask_can_match_multiple_atomic_values_for_other_entities() -> No
         original_text_column="original_text",
         entity_columns=["address"],
         strict_entity_matching=False,
-        iou_threshold=0.8,
+        coverage_threshold=0.8,
     )
     data = [
         {

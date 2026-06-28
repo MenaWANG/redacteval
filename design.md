@@ -1,6 +1,6 @@
 ## Project Overview: Agnostic Redaction Evaluator
 
-RedactEval is a Python package designed to evaluate redaction frameworks directly from comparing the original and redacted text based on the ground-truth entity values that should have been redacted. It is designed to be agnostic of the return format of the redaction framework, enabling users to comapre different redaction frameworks consistently, without complext requirement such as character-span annotations in the input dataset. 
+RedactEval is a Python package designed to evaluate redaction frameworks by comparing original and redacted text against ground-truth entity values that should have been redacted. It is agnostic to redaction-framework output format, enabling users to compare frameworks consistently without complex requirements such as character-span annotations in the input dataset.
 
 ---
 
@@ -17,11 +17,11 @@ Each row should contain:
 
 - `original_text`: unredacted source text.
 - a chosen redacted text column (passed via `redacted_text_column` at evaluation time).
-- one column per entity in `entity_columns` (values may be a string or list of strings).
+- one column per entity in `entity_columns` (values may be a string, list of strings, or `None`).
 
 ### Key Configuration Parameters
 
-- `iou_threshold` (`float`, default `0.8`): minimum overlap score for a match.
+- `coverage_threshold` (`float`, default `0.8`): minimum non-whitespace GT coverage score for a match.
 - `strict_entity_matching` (`bool`, default `True`):
   - `True`: tag entity type must match the ground-truth entity.
   - `False`: any valid recognized tag masking the span counts as redacted.
@@ -46,7 +46,7 @@ Row-level execution:
       -> match: continue
    -> [Extract redaction events from tags via difflib alignment]
    -> [Build/resolve ground-truth occurrences]
-   -> [Best-match scoring (IoU/coverage) and TP/FP/FN updates]
+   -> [Best-match scoring (coverage) and TP/FP/FN updates]
    -> [Aggregate overall and per-entity counts]
 ```
 
@@ -82,7 +82,7 @@ If original and redacted sentence counts differ for a row:
 **Join and score:**
 --------------------------------
 
-- [J1] each GT occurrence is matched to the best predicted event by score (`max(IoU, target_coverage)`),
+- [J1] each GT occurrence is matched to the predicted event with highest target coverage,
 - [J2] below-threshold or missing match -> FN,
 - [J3] If matched:
      - strict=True: TP only if entity type matches, else FN (on the GT entity)
@@ -116,7 +116,7 @@ Report output includes the explicit beta label (for example `F2` or `F0.5`).
 
 Matching: the string matching for the entity_mapping values format-agnostic internally.For example, if a user specifies "first_name", your underlying engine could automatically match <first_name>, <FIRST_NAME>, [FIRST_NAME], or {FIRST_NAME}. This saves the user from having to explicitly write out the brackets for every single vendor variation.
 
-| Scenario | IoU/Coverage >= Threshold | Tag matches canonical entity? | `strict_entity_matching=True` | `strict_entity_matching=False` |
+| Scenario | Coverage >= Threshold | Tag matches canonical entity? | `strict_entity_matching=True` | `strict_entity_matching=False` |
 | :--- | :--- | :--- | :--- | :--- |
 | **Perfect Match** | Yes | Yes | **True Point (TP)** | **True Point (TP)** |
 | **Mislabeled Tag** | Yes | No | **False Negative (FN)** | **True Point (TP)** |
@@ -133,17 +133,19 @@ Scoring unit is **per ground-truth occurrence**.
   - FP for the 2nd masked person occurrence (over-redacted non-PII span),
   - FN for missed person occurrence in the 2nd sentence.
 
-**IoU threshold & entity matching example:**
+**Coverage threshold & entity matching example:**
 
 - Ground truth: `33 Mont Albert Road` which is an address entity in the ground-truth data.
 - Redacted text: `33 <PERSON> Road` replacing only `Mont Albert` with the inconsistent tag <PERSON>
-- IoU score depends on non-whitespace overlap ratio which is (4+6)/(2+4+6+4) = 0.625
-- **Scenario 1**: When IoU threshold > 0.625 (i.e., the redaction didn't meet the IoU threshold)
-    - This instance is a FN for the `address` entity, because the original `address` entity is not adequately redacted based on the IoU threshold.
-- **Scenario 2**: When IoU threshold <= 0.625 (i.e., the redaction met the IoU threshold)
-    - **Scenario 2.1**: When strict_entity_matching = False, this instance is a TP for the `address` entity.
+- Coverage score depends on non-whitespace overlap on the GT span, which is (4+6)/(2+4+6+4) = 10/16 = 0.625.
+- **Scenario 1**: The redaction didn't meet the coverage threshold (i.e., when coverage threshold > 0.625)
+    - This instance is a FN for the `address` entity, because the original `address` entity is not adequately redacted based on the coverage threshold.
+    - This instance is also a FP for the `person` entity because of the mislabeled tag. Compare to scenario 2.2 below, the mislabel of `address` to `person` is causing a bigger issue since it leads to the undercoverage of the address entity.
+- **Scenario 2**: The redaction meet the coverage threshold (i.e., when coverage threshold <= 0.625) 
+    - **Scenario 2.1**: When strict_entity_matching = False, this instance is counted as a TP for the `address` entity.
     - **Scenario 2.2**: When strict_entity_matching = True
-        - this instance is still a FN for the `address` entity, becasue although it is covered, it is not recognized as the correct entity type.
+        - this instance is a FN for the `address` entity, because although it is covered, it is not recognized as the correct entity type.
+        - this instance is currently not also labeled as a FP for the `person` entity to distinguish with Scenario 1 above. 
 
 ---
 
@@ -162,7 +164,7 @@ evaluator = RedactionEvaluator(
         "email": ["email", "email_address"],
         "phone_number": ["phone_number", "mobile_number"],
     },
-    iou_threshold=0.8,
+    coverage_threshold=0.8,
     strict_entity_matching=True,
 )
 

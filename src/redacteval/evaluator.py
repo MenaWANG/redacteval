@@ -87,19 +87,19 @@ class RedactionEvaluator:
         original_text_column: str,
         entity_columns: Iterable[str],
         entity_aliases: Mapping[str, Iterable[str]] | None = None,
-        iou_threshold: float = 0.8,
+        coverage_threshold: float = 0.8,
         strict_entity_matching: bool = True,
         segmenter: SentenceSegmenter | None = None,
     ) -> None:
-        if not 0.0 <= iou_threshold <= 1.0:
-            raise ValueError("iou_threshold must be between 0 and 1.")
+        if not 0.0 <= coverage_threshold <= 1.0:
+            raise ValueError("coverage_threshold must be between 0 and 1.")
 
         self.original_text_column = original_text_column
         self.entity_columns = list(entity_columns)
         self._entity_order = {
             entity: idx for idx, entity in enumerate(self.entity_columns)
         }
-        self.iou_threshold = iou_threshold
+        self.coverage_threshold = coverage_threshold
         self.strict_entity_matching = strict_entity_matching
         self._segmenter = segmenter or regex_sentence_segmenter
         self._entity_aliases = self._build_alias_map(entity_aliases=entity_aliases)
@@ -168,13 +168,13 @@ class RedactionEvaluator:
 
             for occurrence in gt_occurrences:
                 entity_counts = per_entity_counts[occurrence.entity]
-                event_idx, best_iou = self._best_event_match(
+                event_idx, best_coverage = self._best_event_match(
                     original_text=original_text,
                     target_start=occurrence.start,
                     target_end=occurrence.end,
                     redaction_events=redaction_events,
                 )
-                if event_idx is None or best_iou < self.iou_threshold:
+                if event_idx is None or best_coverage < self.coverage_threshold:
                     entity_counts.fn += 1
                     continue
 
@@ -334,17 +334,8 @@ class RedactionEvaluator:
         redaction_events: Sequence[RedactionEvent],
     ) -> tuple[int | None, float]:
         best_idx: int | None = None
-        best_score = 0.0
+        best_coverage = 0.0
         for idx, event in enumerate(redaction_events):
-            iou = _span_iou(
-                text=original_text,
-                a_start=target_start,
-                a_end=target_end,
-                b_start=event.start,
-                b_end=event.end,
-            )
-            # Allow one broader mask (e.g. "<PERSON>" over "Sam Wilson")
-            # to satisfy multiple atomic GT values ("Sam", "Wilson").
             coverage = _span_coverage_on_target(
                 text=original_text,
                 target_start=target_start,
@@ -352,11 +343,10 @@ class RedactionEvaluator:
                 event_start=event.start,
                 event_end=event.end,
             )
-            score = max(iou, coverage)
-            if score > best_score:
-                best_score = score
+            if coverage > best_coverage:
+                best_coverage = coverage
                 best_idx = idx
-        return best_idx, best_score
+        return best_idx, best_coverage
 
     def _build_alias_map(
         self, entity_aliases: Mapping[str, Iterable[str]] | None
