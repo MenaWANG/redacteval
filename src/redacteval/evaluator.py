@@ -163,7 +163,9 @@ class RedactionEvaluator:
                 original_segments=original_segments,
                 redacted_segments=redacted_segments,
             )
-            gt_occurrences = self._build_gt_occurrences(row=row, original_text=original_text)
+            gt_occurrences = self._build_gt_occurrences(
+                row=row, original_text=original_text
+            )
             matched_event_indices: set[int] = set()
 
             for occurrence in gt_occurrences:
@@ -238,14 +240,18 @@ class RedactionEvaluator:
             if not tag_matches:
                 continue
 
-            matcher = SequenceMatcher(a=orig_segment.text, b=red_segment.text, autojunk=False)
+            matcher = SequenceMatcher(
+                a=orig_segment.text, b=red_segment.text, autojunk=False
+            )
             opcodes = matcher.get_opcodes()
 
             for tag_match in tag_matches:
                 tag_start, tag_end = tag_match.span()
                 i_bounds: list[int] = []
                 for _, i1, i2, j1, j2 in opcodes:
-                    if not _opcode_touches_tag(j1=j1, j2=j2, tag_start=tag_start, tag_end=tag_end):
+                    if not _opcode_touches_tag(
+                        j1=j1, j2=j2, tag_start=tag_start, tag_end=tag_end
+                    ):
                         continue
                     i_bounds.extend([i1, i2])
 
@@ -279,9 +285,13 @@ class RedactionEvaluator:
     ) -> list[GroundTruthOccurrence]:
         candidates: list[GroundTruthOccurrence] = []
         for entity in self.entity_columns:
-            entity_values = self._coerce_entity_values(self._get_row_value(row=row, key=entity))
+            entity_values = self._coerce_entity_values(
+                self._get_row_value(row=row, key=entity)
+            )
             for value in entity_values:
-                for start, end in self._find_value_spans(text=original_text, value=value):
+                for start, end in self._find_value_spans(
+                    text=original_text, value=value
+                ):
                     candidates.append(
                         GroundTruthOccurrence(
                             start=start,
@@ -535,9 +545,13 @@ def _span_contains(
 
 
 def _is_boundary_aware_match(*, text: str, start: int, end: int) -> bool:
-    return _is_left_boundary(text=text, start=start) and _is_right_boundary(text=text, end=end)
+    return _is_left_boundary(text=text, start=start) and _is_right_boundary(
+        text=text, end=end
+    )
+
 
 _JOINERS = {".", "_", "-", "@", "%", "+"}
+
 
 def _is_left_boundary(*, text: str, start: int) -> bool:
     if start == 0:

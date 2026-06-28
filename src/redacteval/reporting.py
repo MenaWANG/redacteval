@@ -29,7 +29,9 @@ def format_report(results: EvaluationResults, *, precision: int = 3) -> str:
 
     for entity, metrics in per_entity.items():
         lines.append(entity)
-        lines.append(f"  TP: {metrics['tp']} | FP: {metrics['fp']} | FN: {metrics['fn']}")
+        lines.append(
+            f"  TP: {metrics['tp']} | FP: {metrics['fp']} | FN: {metrics['fn']}"
+        )
         lines.append(
             f"  Precision: {metrics['precision']:.{precision}f} | "
             f"Recall: {metrics['recall']:.{precision}f} | "

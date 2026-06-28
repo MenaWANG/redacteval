@@ -17,7 +17,9 @@ def _sample_results(*, beta: float = 2.0):
             "email": "xavier@example.com",
         }
     ]
-    return evaluator.evaluate(data, redacted_text_column="redacted_framework_a", beta=beta)
+    return evaluator.evaluate(
+        data, redacted_text_column="redacted_framework_a", beta=beta
+    )
 
 
 def test_format_report_contains_core_sections() -> None:
