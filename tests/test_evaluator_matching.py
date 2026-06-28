@@ -1,7 +1,7 @@
 from redacteval import RedactionEvaluator, load_demo_data
 
 
-def test_evaluate_counts_mislabeled_tag_as_fn_and_fp_when_strict() -> None:
+def test_evaluate_counts_mislabeled_tag_as_fn_only_when_strict() -> None:
     evaluator = RedactionEvaluator(
         original_text_column="original_text",
         entity_columns=["person", "address"],
@@ -19,10 +19,10 @@ def test_evaluate_counts_mislabeled_tag_as_fn_and_fp_when_strict() -> None:
     summary = evaluator.evaluate(data, redacted_text_column="redacted_framework_a").summary()
     assert summary["per_entity"]["person"]["tp"] == 0
     assert summary["per_entity"]["person"]["fn"] == 1
-    assert summary["per_entity"]["person"]["fp"] == 1
+    assert summary["per_entity"]["person"]["fp"] == 0
     assert summary["overall"]["tp"] == 0
     assert summary["overall"]["fn"] == 1
-    assert summary["overall"]["fp"] == 1
+    assert summary["overall"]["fp"] == 0
 
 
 def test_evaluate_counts_mislabeled_tag_as_tp_when_not_strict() -> None:
@@ -196,6 +196,7 @@ def test_evaluate_first_and_last_name_entities_seperate() -> None:
     assert summary["overall"]["fn"] == 0
 
 def test_evaluate_first_and_last_name_entities_small_letter_fail() -> None:
+    #FIXME: This test will fail when <last_name> is used instead of <LAST_NAME>
     evaluator = RedactionEvaluator(
         original_text_column="original_text",
         entity_columns=["person"],

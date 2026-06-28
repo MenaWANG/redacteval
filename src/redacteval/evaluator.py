@@ -186,8 +186,8 @@ class RedactionEvaluator:
                     elif event.tag_entities:
                         # Mislabeled tag under strict mode.
                         entity_counts.fn += 1
-                        entity_counts.fp += 1
                     else:
+                        # Completely missed the GT entity.
                         entity_counts.fn += 1
                 else:
                     if event.tag_entities:
