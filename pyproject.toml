@@ -1,10 +1,32 @@
 [project]
 name = "redacteval"
-version = "0.0.1"
+version = "0.1.0"
 description = "Evaluation and diagnostics toolkit for text redaction quality."
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = []
+authors = [{ name = "Mena Wang"}]
+license = { file = "LICENSE" }
+keywords = ["redaction", "evaluation", "privacy", "nlp"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Security",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "pandas>=2.3.3",
+]
+
+[project.urls]
+Repository = "https://github.com/MenaWANG/redacteval"
+Issues = "https://github.com/MenaWANG/redacteval/issues"
+Changelog = "https://github.com/MenaWANG/redacteval/blob/main/CHANGELOG.md"
+LinkedIn = "https://www.linkedin.com/in/mena-ning-wang/"
 
 [build-system]
 requires = ["uv_build>=0.11.23,<0.12.0"]
@@ -13,7 +35,6 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "ipykernel>=7.3.0",
-    "pandas>=2.3.3",
     "pytest>=9.1.1",
     "ruff>=0.15.20",
 ]
