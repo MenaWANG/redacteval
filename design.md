@@ -90,16 +90,12 @@ If original and redacted sentence counts differ for a row:
 - [J4] Unmatched predicted events -> FP (over-redaction)
 - [J5] Aggregate TP/FP/FN globally and per entity
 
-**Known issue to fix:**
+**Resolved issue (matching stability):**
 --------------------------------
-- There is a reproducible edge case with adjacent person tags where mixed casing can change matching behavior unexpectedly.
-- Reference test: `tests/test_evaluator_matching.py` (`test_evaluate_first_and_last_name_entities_small_letter_fail`).
-- Symptom:
-  - `<FIRST_NAME> <LAST_NAME>` may pass
-  - `<FIRST_NAME> <last_name>` may fail in some sentence contexts
-- This is not intended behavior because entity alias matching is case-insensitive by design.
-- Suspected root cause is context-sensitive difflib span projection around adjacent tags (Predicted Side [P3]).
-- Action: keep this documented and address in a dedicated matching-stability fix.
+- Previously, adjacent tags could be projected onto the wrong original-text span because `SequenceMatcher` aligns characters and the tag interior (e.g. `last_name`) spuriously matched characters in the original text.
+- Root cause: tag-interior characters were fed to difflib (Predicted Side [P2]). Because alignment is case-sensitive, this was casing-dependent — lowercase/mixed-case tags (`<last_name>`) commonly failed, but all-uppercase tags were *not* immune either (e.g. `<FIRST_NAME> <LAST_NAME>` over "Liam Sam" mis-projects).
+- Fix: each tag span is overwritten with a sentinel character absent from the original segment before diffing, so alignment depends only on the surrounding real text and is independent of tag casing. The unmasked text is still used to read the tag entity.
+- Regression test: `tests/test_evaluator_matching.py::test_evaluate_adjacent_name_tags_are_case_insensitive` (parametrized over upper/lower/mixed casing).
 
 ### Step 4: Metrics
 
