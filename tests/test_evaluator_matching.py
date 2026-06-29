@@ -444,22 +444,31 @@ def test_evaluate_multi_sentence_demo_row_detects_all_framework_a_entities() -> 
     assert summary["per_entity"]["phone_number"]["tp"] == 0
 
 
-# def test_evaluate_multi_sentence_demo_dataset_has_no_framework_a_fn() -> None:
-#     df = load_demo_data()
-#     evaluator = RedactionEvaluator(
-#         original_text_column="original_text",
-#         entity_columns=["name", "email", "phone_number"],
-#         entity_aliases={
-#             "name": ["name", "person", "first_name", "last_name"],
-#             "email": ["email", "email_address"],
-#             "phone_number": ["phone_number", "mobile_number"],
-#         },
-#         strict_entity_matching=True,
-#     )
+def test_evaluate_multi_sentence_demo_dataset_framework_a_counts() -> None:
+    # Full demo dataset (all rows). framework_a leaves "Andrew" unredacted in
+    # row 1 (the original has "her assistant Andrew", the redaction keeps it),
+    # so a single name false negative is the *correct* result -- not a bug. The
+    # previously disabled version asserted name.fn == 0, which is wrong; email
+    # and phone are fully redacted (fn == 0).
+    df = load_demo_data()
+    evaluator = RedactionEvaluator(
+        original_text_column="original_text",
+        entity_columns=["name", "email", "phone_number"],
+        entity_aliases={
+            "name": ["name", "person", "first_name", "last_name"],
+            "email": ["email", "email_address"],
+            "phone_number": ["phone_number", "mobile_number"],
+        },
+        strict_entity_matching=True,
+    )
 
-#     summary = evaluator.evaluate(df, redacted_text_column="redacted_framework_a").summary()
+    summary = evaluator.evaluate(
+        df, redacted_text_column="redacted_framework_a"
+    ).summary()
 
-#     # assert summary["overall"]["fn"] == 0
-#     assert summary["per_entity"]["name"]["fn"] == 0
-#     assert summary["per_entity"]["email"]["fn"] == 0
-#     assert summary["per_entity"]["phone_number"]["fn"] == 0
+    assert summary["evaluated_rows"] == 3
+    assert summary["skipped_rows"] == 0
+    assert summary["per_entity"]["name"]["fn"] == 1
+    assert summary["per_entity"]["email"]["fn"] == 0
+    assert summary["per_entity"]["phone_number"]["fn"] == 0
+    assert summary["overall"]["fn"] == 1

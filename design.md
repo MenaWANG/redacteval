@@ -124,10 +124,10 @@ Scoring unit is **per ground-truth occurrence**.
 
 - Original: `John Doe is a student of La Trobe University. John loves basketball.`
 - Redacted: `<PERSON> is a student of <PERSON> University. John loves basketball.`
-- If `person = ["John", "Doe"]`, this can produce:
-  - TP for the 1st masked person occurrence,
-  - FP for the 2nd masked person occurrence (over-redacted non-PII span),
-  - FN for missed person occurrence in the 2nd sentence.
+- If `person = ["John", "Doe"]`, this produces (scoring per ground-truth occurrence):
+  - 2 TP: both `John` and `Doe` are covered by the first `<PERSON>` mask,
+  - 1 FP: the second `<PERSON>` over-redacts the non-PII span `La Trobe`,
+  - 1 FN: the `John` in the second sentence is left unredacted.
 
 **Coverage threshold & entity matching example:**
 
