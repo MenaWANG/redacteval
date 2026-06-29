@@ -44,9 +44,7 @@ Row-level execution:
    -> [Segment count equality check]
       -> mismatch: warning + row skipped
       -> match: continue
-   -> [Extract redaction events from tags via difflib alignment]
-   -> [Build/resolve ground-truth occurrences]
-   -> [Best-match scoring (coverage) and TP/FP/FN updates]
+   -> [Scoring per sentence]
    -> [Aggregate overall and per-entity counts]
 ```
 
@@ -64,38 +62,15 @@ If original and redacted sentence counts differ for a row:
 
 ### Step 3: Predicted-Event and Ground-Truth Construction
 
-**Predicted side:**
---------------------------------
-- [P1] extract tag tokens from redacted sentences (supported wrappers include `<...>`, `[...]`, `{...}`),
-- [P2] align each tag back to an original-text span using `SequenceMatcher` opcodes,
-- [P3] merge fragmented opcodes touching the same tag token,
-- [P4] build predicted redaction events: `(start, end, tag_entities)`.
-
-**Ground-truth side:**
---------------------------------
-
-- [G1] find literal, case-insensitive occurrences for each entity value in `original_text`,
-- [G2] enforce boundary-aware matching to avoid partial token noise,
-- [G3] resolve overlaps so larger/more specific spans can own nested spans (e.g., John.Doe@example.com belongs to EMAIL, not PERSON),
-- [G4] produce finalized scoring targets.
-
-**Join and score:**
---------------------------------
-
-- [J1] each GT occurrence is matched to the predicted event with highest target coverage,
-- [J2] below-threshold or missing match -> FN,
-- [J3] If matched:
+- supported wrappers include `<...>`, `[...]`, `{...}` for the predicted events.
+- resolve overlaps so larger spans can own nested spans (e.g., John.Doe@example.com belongs to EMAIL, not PERSON),
+- each GT occurrence is matched to the predicted event with highest target coverage,
+- below-threshold or missing match -> FN,
+- If matched:
      - strict=True: TP only if entity type matches, else FN (on the GT entity)
      - strict=False: TP if any valid redaction tag exists
-- [J4] Unmatched predicted events -> FP (over-redaction)
-- [J5] Aggregate TP/FP/FN globally and per entity
-
-**Resolved issue (matching stability):**
---------------------------------
-- Previously, adjacent tags could be projected onto the wrong original-text span because `SequenceMatcher` aligns characters and the tag interior (e.g. `last_name`) spuriously matched characters in the original text.
-- Root cause: tag-interior characters were fed to difflib (Predicted Side [P2]). Because alignment is case-sensitive, this was casing-dependent — lowercase/mixed-case tags (`<last_name>`) commonly failed, but all-uppercase tags were *not* immune either (e.g. `<FIRST_NAME> <LAST_NAME>` over "Liam Sam" mis-projects).
-- Fix: each tag span is overwritten with a sentinel character absent from the original segment before diffing, so alignment depends only on the surrounding real text and is independent of tag casing. The unmasked text is still used to read the tag entity.
-- Regression test: `tests/test_evaluator_matching.py::test_evaluate_adjacent_name_tags_are_case_insensitive` (parametrized over upper/lower/mixed casing).
+- Unmatched predicted events -> FP (over-redaction)
+- Aggregate TP/FP/FN globally and per entity
 
 ### Step 4: Metrics
 
