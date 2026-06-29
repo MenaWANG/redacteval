@@ -416,29 +416,25 @@ class RedactionEvaluator:
 
     @staticmethod
     def _as_text(value: object) -> str:
-        if value is None:
-            return ""
         if isinstance(value, str):
             return value
+        if _is_missing_scalar(value):
+            return ""
         return str(value)
 
     @staticmethod
     def _coerce_entity_values(value: object) -> list[str]:
-        if value is None:
-            return []
         if isinstance(value, str):
             stripped = value.strip()
             return [stripped] if stripped else []
         if isinstance(value, Iterable):
             values: list[str] = []
             for item in value:
-                if item is None:
-                    continue
-                text = str(item).strip()
+                text = _scalar_to_text(item)
                 if text:
                     values.append(text)
             return values
-        text = str(value).strip()
+        text = _scalar_to_text(value)
         return [text] if text else []
 
 
@@ -540,6 +536,40 @@ def _safe_div(numerator: float, denominator: float) -> float:
     if denominator == 0:
         return 0.0
     return numerator / denominator
+
+
+def _is_missing_scalar(value: object) -> bool:
+    """Return True for ``None`` and pandas/NumPy missing markers.
+
+    Detected without importing pandas: ``NaN`` and ``NaT`` are never equal to
+    themselves, and pandas ``NA`` raises when used in a boolean context (so it
+    is treated as missing too).
+    """
+
+    if value is None:
+        return True
+    try:
+        return bool(value != value)
+    except (TypeError, ValueError):
+        return True
+
+
+def _scalar_to_text(value: object) -> str:
+    """Normalize a single ground-truth scalar to a trimmed string.
+
+    Missing markers become ``""``. An integral float (e.g. a numeric column that
+    pandas promoted to ``float64`` because of a missing cell) is rendered
+    without a trailing ``".0"`` so it still matches the digits in the source
+    text instead of being treated as an unredacted false positive.
+    """
+
+    if isinstance(value, str):
+        return value.strip()
+    if _is_missing_scalar(value):
+        return ""
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    return str(value).strip()
 
 
 def _mask_tag_spans(
