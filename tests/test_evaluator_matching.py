@@ -1,3 +1,5 @@
+import pytest
+
 from redacteval import RedactionEvaluator, load_demo_data
 
 
@@ -158,6 +160,34 @@ def test_evaluate_counts_unmatched_redaction_tags_as_fp() -> None:
     assert summary["overall"]["fp"] == 1
 
 
+def test_adjacent_name_tags_score_no_spurious_false_positive() -> None:
+    # Regression test for the case-sensitive alignment fix: with all-uppercase
+    # tags, "Liam" used to collapse onto the 'L' in "LAST_NAME", projecting
+    # <FIRST_NAME> to a zero-width span that was then scored as a spurious FP.
+    # Masking tag spans before diffing yields exactly two TP and no FP.
+    evaluator = RedactionEvaluator(
+        original_text_column="original_text",
+        entity_columns=["person"],
+        entity_aliases={"person": ["person", "first_name", "last_name", "name"]},
+        strict_entity_matching=False,
+        coverage_threshold=0.8,
+    )
+    data = [
+        {
+            "original_text": "Meet Liam Sam now.",
+            "redacted_framework_a": "Meet <FIRST_NAME> <LAST_NAME> now.",
+            "person": ["Liam", "Sam"],
+        }
+    ]
+
+    summary = evaluator.evaluate(
+        data, redacted_text_column="redacted_framework_a"
+    ).summary()
+    assert summary["per_entity"]["person"]["tp"] == 2
+    assert summary["per_entity"]["person"]["fp"] == 0
+    assert summary["per_entity"]["person"]["fn"] == 0
+
+
 def test_evaluate_overlapping_entities_with_strict_coverage_threshold() -> None:
     evaluator = RedactionEvaluator(
         original_text_column="original_text",
@@ -248,8 +278,20 @@ def test_evaluate_first_and_last_name_entities_seperate() -> None:
     assert summary["overall"]["fn"] == 0
 
 
-def test_evaluate_first_and_last_name_entities_small_letter_fail() -> None:
-    # FIXME: This test will fail when <last_name> is used instead of <LAST_NAME>
+@pytest.mark.parametrize(
+    "first_tag, last_tag",
+    [
+        ("<FIRST_NAME>", "<LAST_NAME>"),
+        ("<first_name>", "<last_name>"),
+        ("<FIRST_NAME>", "<last_name>"),
+        ("<first_name>", "<LAST_NAME>"),
+    ],
+)
+def test_evaluate_adjacent_name_tags_are_case_insensitive(first_tag, last_tag) -> None:
+    # Regression test: alias matching is case-insensitive by design, so tag
+    # casing must not change scoring. Previously lowercase/mixed-case tags
+    # corrupted the difflib span projection (only the all-uppercase form
+    # happened to score correctly).
     evaluator = RedactionEvaluator(
         original_text_column="original_text",
         entity_columns=["person"],
@@ -259,7 +301,10 @@ def test_evaluate_first_and_last_name_entities_small_letter_fail() -> None:
     data = [
         {
             "original_text": "Our primary contact for the Sydney office is Jane Smith and she is friendly.",
-            "redacted_framework_a": "Our primary contact for the Sydney office is <FIRST_NAME> <LAST_NAME> and she is friendly.",
+            "redacted_framework_a": (
+                "Our primary contact for the Sydney office is "
+                f"{first_tag} {last_tag} and she is friendly."
+            ),
             "person": ["Jane", "Smith"],
         }
     ]
@@ -399,22 +444,31 @@ def test_evaluate_multi_sentence_demo_row_detects_all_framework_a_entities() -> 
     assert summary["per_entity"]["phone_number"]["tp"] == 0
 
 
-# def test_evaluate_multi_sentence_demo_dataset_has_no_framework_a_fn() -> None:
-#     df = load_demo_data()
-#     evaluator = RedactionEvaluator(
-#         original_text_column="original_text",
-#         entity_columns=["name", "email", "phone_number"],
-#         entity_aliases={
-#             "name": ["name", "person", "first_name", "last_name"],
-#             "email": ["email", "email_address"],
-#             "phone_number": ["phone_number", "mobile_number"],
-#         },
-#         strict_entity_matching=True,
-#     )
+def test_evaluate_multi_sentence_demo_dataset_framework_a_counts() -> None:
+    # Full demo dataset (all rows). framework_a leaves "Andrew" unredacted in
+    # row 1 (the original has "her assistant Andrew", the redaction keeps it),
+    # so a single name false negative is the *correct* result -- not a bug. The
+    # previously disabled version asserted name.fn == 0, which is wrong; email
+    # and phone are fully redacted (fn == 0).
+    df = load_demo_data()
+    evaluator = RedactionEvaluator(
+        original_text_column="original_text",
+        entity_columns=["name", "email", "phone_number"],
+        entity_aliases={
+            "name": ["name", "person", "first_name", "last_name"],
+            "email": ["email", "email_address"],
+            "phone_number": ["phone_number", "mobile_number"],
+        },
+        strict_entity_matching=True,
+    )
 
-#     summary = evaluator.evaluate(df, redacted_text_column="redacted_framework_a").summary()
+    summary = evaluator.evaluate(
+        df, redacted_text_column="redacted_framework_a"
+    ).summary()
 
-#     # assert summary["overall"]["fn"] == 0
-#     assert summary["per_entity"]["name"]["fn"] == 0
-#     assert summary["per_entity"]["email"]["fn"] == 0
-#     assert summary["per_entity"]["phone_number"]["fn"] == 0
+    assert summary["evaluated_rows"] == 3
+    assert summary["skipped_rows"] == 0
+    assert summary["per_entity"]["name"]["fn"] == 1
+    assert summary["per_entity"]["email"]["fn"] == 0
+    assert summary["per_entity"]["phone_number"]["fn"] == 0
+    assert summary["overall"]["fn"] == 1
